@@ -20,7 +20,11 @@ class cgnp(mb.Compound):
     backfill : mb.Compound, optional, default=None
         Place chains on uncoated sections of nanoparticle surface
     coating_pattern : str, optional, default='isotropic'
-        TODO: Add support for coating patterns
+        TODO: Add support for coating patterns (with single chain-type, i.e. bipolar pattern)
+        TODO: Add support for backfill
+            TODO: Add support for using two types of chains
+        TODO: Add fractional surface area (with certain patterns) 
+        TODO: Clean up code?
     '''
 
     def __init__(self, radius=10, bead_diameter=0.2, chain_length=12, chain_density=0.5, backfill=None):
@@ -74,16 +78,19 @@ class cgnp(mb.Compound):
                         mb.Compound.translate(self['up'], [0, chain_separation, 0])
                         mb.Compound.translate(self['down'], [0, -(chain_separation), 0])
                 
-                ''' Makes the beads to populate the end of the chain. Should only have one per alkane chain '''
+                ''' Makes the beads to cap the end of the chain. There should only be one per alkane chain '''
                 class CGMME(mb.Compound):
                     def __init__ (self, chain_separation=0.30):
                         super(CGMME, self).__init__()
                         end_bead = mb.Particle(name='_MME')
                         self.add(end_bead, 'end_bead')
                         
+                        # only one port added because this is the last bead on the chain
                         self.add(mb.Port(anchor=self[0]), label='end')
                         mb.Compound.translate(self['end'], [0, chain_separation, 0])
-
+                
+                # builds the chain
+                # This process is a little hacky until I figure out how to use mbuild's polymer recipe.
                 last_bead = CGMMM()
                 self.add(last_bead)
                 for i in range (chain_length-2):
@@ -91,31 +98,33 @@ class cgnp(mb.Compound):
                     mb.force_overlap(move_this=current_bead, from_positions=current_bead['up'], to_positions=last_bead['down'])
                     self.add(current_bead)
                     last_bead = current_bead
-
+                
+                # add the end bead
                 end_bead = CGMME()
                 self.add(end_bead)
                 mb.force_overlap(move_this=end_bead, from_positions=end_bead['end'], to_positions=current_bead['down'])
                 print('Chain successfully built.')
 
-
+        # build the nanoparticle core 
         np_core = Core(radius)
         self.add(np_core)
         print('Core added to Compound')
-
+        
+        # adds the chains to the surface of the nanoparticle.
+        # Again, more than a little hacky right now.
         n_cgn = self.n_particles
         i = n_cgn
         
         while (i > 0):
             alkane = CGAlkane(chain_length)
             self.add(alkane)
+            # identifies the remaining unused port on the chain
             hanging_port = alkane.all_ports()
             port_pos = hanging_port[0]
             mb.force_overlap(move_this=alkane, from_positions=port_pos, to_positions=np_core['port'][i-1])
             i -= 1
             print('Chain added. %d left.' % i)
 
-        # TODO: Add support for multiple coating patterns
-        # TODO: Add backfill support
         
         print('Finished adding chains. Now adding ridgid body labels.')
         self.label_rigid_bodies(rigid_particles='_CGN')
