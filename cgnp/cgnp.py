@@ -95,12 +95,17 @@ class cgnp(mb.Compound):
                 # builds the alkane chain
                 chain = mb.recipes.Polymer(CGMMM(), n=chain_length-1)
                 self.add(chain)
+                
+                # remove hanging port because mbuild will not recgonize it
+                chain.remove(chain.all_ports()[0])
 
                 # adds cap to end of chain
                 cap = CGMME()
                 self.add(cap)
                 mb.force_overlap(move_this=cap, from_positions=cap['end'], to_positions=chain['up'])
-
+                
+                # replace removed port with fresh port
+                self.add(mb.Port(anchor=self[0]))
 
         # build the nanoparticle core 
         np_core = Core(radius, bead_diameter)
