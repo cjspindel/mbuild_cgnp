@@ -47,6 +47,9 @@ class cgnp(mb.Compound):
 
                 core_formation = core_pattern.apply(core_bead)
                 self.add(core_formation)
+                
+                self.generate_bonds(name_a='_CGN', name_b='_CGN', dmin=bead_diameter*2-0.4, dmax=bead_diameter*2+0.3)
+
                 print('Core beads added.')
 
                 # apply ports to each bead in core_formation
