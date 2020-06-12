@@ -27,19 +27,19 @@ class cgnp(mb.Compound):
         TODO: Clean up code?
     '''
 
-    def __init__(self, radius=10, bead_diameter=0.2, chain_length=12, chain_density=0.5, backfill=None):
+    def __init__(self, radius=2.5, bead_diameter=0.6, chain_length=18, chain_density=2.5, backfill=None):
         super(cgnp, self).__init__()
        
         
         ''' Makes the core '''
         class Core(mb.Compound):
-            def __init__ (self, radius):
+            def __init__ (self, radius, bead_diameter):
                 super(Core, self).__init__()
                 
                 core_bead = mb.Particle(name='_CGN')
 
-                # calculate n number of core particles from radius and surface ratio
-                n_core_particles = (int)(0.2 * (4*np.pi*(radius**2)))
+                # calculate n number of core particles from ratio of core total SA and single bead SA
+                n_core_particles = (int)((4*np.pi*(radius**2))/(4*np.pi*(bead_diameter/2)**2))
                 
                 # arrange beads into a sphere pattern and add it to the compound
                 core_pattern = mb.SpherePattern(n_core_particles)
@@ -106,7 +106,7 @@ class cgnp(mb.Compound):
                 print('Chain successfully built.')
 
         # build the nanoparticle core 
-        np_core = Core(radius)
+        np_core = Core(radius, bead_diameter)
         self.add(np_core)
         print('Core added to Compound')
         
