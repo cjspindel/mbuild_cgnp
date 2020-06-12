@@ -91,22 +91,16 @@ class cgnp(mb.Compound):
                         # only one port added because this is the last bead on the chain
                         self.add(mb.Port(anchor=self[0]), label='end')
                         mb.Compound.translate(self['end'], [0, chain_separation, 0])
-                
-                # builds the chain
-                # This process is a little hacky until I figure out how to use mbuild's polymer recipe.
-                last_bead = CGMMM()
-                self.add(last_bead)
-                for i in range (chain_length-2):
-                    current_bead = CGMMM()
-                    mb.force_overlap(move_this=current_bead, from_positions=current_bead['up'], to_positions=last_bead['down'])
-                    self.add(current_bead)
-                    last_bead = current_bead
-                
-                # add the end bead
-                end_bead = CGMME()
-                self.add(end_bead)
-                mb.force_overlap(move_this=end_bead, from_positions=end_bead['end'], to_positions=current_bead['down'])
-                print('Chain successfully built.')
+               
+                # builds the alkane chain
+                chain = mb.recipes.Polymer(CGMMM(), n=chain_length-1)
+                self.add(chain)
+
+                # adds cap to end of chain
+                cap = CGMME()
+                self.add(cap)
+                mb.force_overlap(move_this=cap, from_positions=cap['end'], to_positions=chain['up'])
+
 
         # build the nanoparticle core 
         np_core = Core(radius, bead_diameter)
